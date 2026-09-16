@@ -12,7 +12,7 @@ class TestFitnessAnalyzer(unittest.TestCase):
 
     def test_resting_session(self):
         session = Session("S01", self.participant)
-        for obs in self.scenarios:
+        for obs in self.scenarios["resting"]:
             session.add_observation(obs)
         res = self.analyzer.analyze(session)
         self.assertEqual(res["classification"], "resting")
