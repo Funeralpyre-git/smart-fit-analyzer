@@ -1,43 +1,23 @@
-def get_sample_scenarios():
-    return {
-        "resting": [
-            {"timestamp": i,
-             "heart_rate": 62,
-             "skin_response": 1.1,
-             "temperature": 32.5,
-             "activity_level": 0.1,
-             "signal_quality": 0.95
-             }
-            for i in range(1, 6)
-        ],
-        "moderate_activity": [
-            {"timestamp": i,
-             "heart_rate": 125,
-             "skin_response": 2.5,
-             "temperature": 33.8,
-             "activity_level": 0.6,
-             "signal_quality": 0.91
-             }
-            for i in range(1, 6)
-        ],
-        "high_activity": [
-            {"timestamp": i,
-             "heart_rate": 170,
-             "skin_response": 3.8,
-             "temperature": 35.1,
-             "activity_level": 0.9,
-             "signal_quality": 0.92
-             }
-            for i in range(1, 6)
-        ],
-        "recovery": [
-            {"timestamp": 1, "heart_rate": 165, "skin_response": 3.5, "temperature": 34.5, "activity_level": 0.85, "signal_quality": 0.90},
-            {"timestamp": 2, "heart_rate": 160, "skin_response": 3.2, "temperature": 34.2, "activity_level": 0.80, "signal_quality": 0.92},
-            {"timestamp": 3, "heart_rate": 120, "skin_response": 2.1, "temperature": 33.5, "activity_level": 0.30, "signal_quality": 0.91},
-            {"timestamp": 4, "heart_rate": 95, "skin_response": 1.5, "temperature": 33.0, "activity_level": 0.15, "signal_quality": 0.93}
-        ],
-        "invalid_sensor_data": [
-            {"timestamp": i, "heart_rate": -1, "skin_response": 0.0, "temperature": 0.0, "activity_level": 1.5, "signal_quality": 0.20}
-            for i in range(1,6)
-        ]
+from data_generator import generate_fitness_data
+
+# imports and calls data_generator.py to generate sample datasets
+
+def get_sample_scenarios() -> dict:
+    scenario_mapping ={
+        "resting": "resting",
+        "moderate_activity": "moderate_activity",
+        "high_activity": "high_activity",
+        "recovery": "recovery",
+        "invalid_sensor_data": "poor_quality"
     }
+
+    scenarios = {}
+    for name, gen_scenario in scenario_mapping.items():
+        profile, observations = generate_fitness_data(
+            participant_id="P101",
+            scenario=gen_scenario,
+            seed=42,
+            number_of_windows=10
+        )
+        scenarios[name] = (profile, observations)
+    return scenarios
