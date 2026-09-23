@@ -34,9 +34,9 @@ smart-fitness-analyzer/
 ├── models.py			# Domain classes (Participants, Observation, Session)
 ├── analyzer.py			# Analysis hierarchy (BaseAnalyzer and FitnessAnalyzer)
 ├── sample_data.py		# Mock sensor streams for all 5 mandatory scenarios
-├── main.py			# Application running all scenarios
+├── main.py				# Application running all scenarios
 ├── tests.py			# Unit test suite verifying logic across scenarios and edge cases
-├── data_generator.py		# Supplied data generator module
+├── data_generator.py	# Supplied data generator module
 └── README.md			# Documentation
 ```
 The codebase is decomposed into specialized modules to improve readability and maintainability:
