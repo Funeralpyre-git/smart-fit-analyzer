@@ -20,6 +20,11 @@ class FitnessAnalyzer(BaseAnalyzer):
         return (usable_count / total_count) >= 0.50
 
     def analyze(self, session: Session) -> dict:
+        if not isinstance(session, Session):
+            return {
+                "classification": "error", "rationale": "Invalid Session instance.", "usable_observations": 0, "total_observations": 0
+            }
+
         valid_obs = session.get_valid_observations()
         total_obs = len(session._observations)
         usable_obs = len(valid_obs)
@@ -27,6 +32,8 @@ class FitnessAnalyzer(BaseAnalyzer):
         # checks for insufficient data scenario
         if not self.is_sufficient_data(usable_obs, total_obs):
             return {
+                "session_id": session.session_id,
+                "participant_id": session.participant.participant_id,
                 "usable_observations": usable_obs,
                 "total_observations": total_obs,
                 "classification": "insufficient_data",
@@ -35,7 +42,7 @@ class FitnessAnalyzer(BaseAnalyzer):
             }
 
         summaries = session.calculate_summaries()
-        avg_hr = summaries["avg_heart_rate"]
+        avg_hr = summaries.get("avg_heart_rate", 0.0)
         part = session.participant
         rel_hr = calculate_relative_intensity(avg_hr, part.max_hr)
 
@@ -56,9 +63,11 @@ class FitnessAnalyzer(BaseAnalyzer):
             rationale += "Significant decline in heart rate detected towards session end."
 
         return {
+            "session_id": session.session_id,
+            "participant_id": session.participant.participant_id,
             "usable_observations": usable_obs,
             "total_observations": total_obs,
             "classification": classification,
             "rationale": rationale,
-            "summaries": summaries,
+            "summaries": summaries
         }

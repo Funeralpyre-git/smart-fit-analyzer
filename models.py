@@ -1,60 +1,28 @@
-from utils import validate_sensor_reading, compute_safe_average
+from utils import validate_sensor_reading, compute_safe_average, calculate_relative_intensity
+from validators import validate_participant_id, validate_session_id
 
 class Observation:
-    def __init__(self, raw_data: dict):
-        self._raw_data = raw_data # protected attribute
-        self._is_valid = validate_sensor_reading(raw_data) #calls function from utils.py
+    def __init__(self, timestamp: int, heart_rate: float, skin_response: float, temperature: float, activity_level: float, signal_quality: float, is_valid: bool = True):
+        self.timestamp = int(timestamp)
+        self.heart_rate = float(heart_rate)
+        self.skin_response = float(skin_response)
+        self.temperature = float(temperature)
+        self.activity_level = float(activity_level)
+        self.signal_quality = float(signal_quality)
+        self._is_valid = bool(is_valid)
 
     @property
     def is_valid(self) -> bool:
         return self._is_valid
 
-    @property
-    def heart_rate(self) -> float:
-        try:
-            return self._raw_data.get("heart_rate", 0.0)
-        except (ValueError, TypeError):
-            return 0.0
-
-    @property
-    def activity_level(self) -> float:
-        try:
-            return self._raw_data.get("activity_level", 0.0)
-        except (ValueError, TypeError):
-            return 0.0
-
-    @property
-    def timestamp(self) -> float:
-        try:
-            return self._raw_data.get("timestamp", 0)
-        except (ValueError, TypeError):
-            return 0
-
 class Participant:
-    def __init__(self, participant_id: str, age: int, resting_hr: float, max_hr: float):
-        if not isinstance(participant_id, str) or not participant_id.strip():
-            raise ValueError("Participant ID must be a non-empty string.")
-        if not isinstance(age, int) or age <= 0:
-            raise ValueError("Age must be a positive integer.")
-        if not isinstance(resting_hr, (int, float)) or resting_hr <= 0:
-            raise ValueError("Resting HR must be a positive number.")
-        if not isinstance(max_hr, (int, float)) or max_hr <= resting_hr:
-            raise ValueError("Max HR must be a positive number greater than resting HR.")
+    def __init__(self, participant_id: str, name: str, resting_hr: float, max_hr: float= 185.0):
+        validate_participant_id(participant_id)
+        self.participant_id = participant_id.strip()
+        self.name = name.strip() if name else "unknown"
 
-        self.participant_id = participant_id
-        self.age = age
         self._resting_hr = float(resting_hr)
         self._max_hr = float(max_hr)
-
-    @classmethod
-    # factory method constructing a participant from data_generator
-    def from_profile(cls, profile: dict, age: int = 30):
-        if not isinstance(profile, dict):
-            raise TypeError("Profile must be a dictionary.")
-        participant_id = profile.get("participant_id", "P001")
-        resting_hr = profile.get("baseline_heart_rate", 65)
-        max_hr = 220 - age
-        return cls(participant_id=participant_id, age=age, resting_hr=resting_hr, max_hr=max_hr)
 
     @property
     def resting_hr(self) -> float:
@@ -66,18 +34,15 @@ class Participant:
 
 class Session:
     def __init__(self, session_id: str, participant: Participant):
-        if not isinstance(participant, Participant):
-            raise TypeError("Participant must be a participant.")
-        self.session_id = session_id
+        validate_session_id(session_id)
+        self.session_id = session_id.strip()
         self.participant = participant # participant profile reference
         self._observations = [] # list of Observation objects
 
     # instantiates and stores an Observation object
-    def add_observation(self, raw_obs_dict: dict):
-        try:
-            self._observations.append(Observation(raw_obs_dict))
-        except Exception:
-            self._observations.append(Observation({}))
+    def add_observation(self, obs: Observation):
+        if isinstance(obs, Observation):
+            self._observations.append(obs)
 
     # filters out invalid or poor-quality observations
     def get_valid_observations(self) -> list:
@@ -103,14 +68,18 @@ class Session:
             return False
 
         split_idx = int(len(valid) * 0.7)
-        tail = valid[split_idx:]
         initial = valid[:split_idx]
+        tail = valid[split_idx:]
+        if not initial or not tail:
+            return False
 
-        avg_tail_hr = compute_safe_average([o.heart_rate for o in tail])
         avg_init_hr = compute_safe_average([o.heart_rate for o in initial])
-
+        avg_tail_hr = compute_safe_average([o.heart_rate for o in tail])
+        
         return avg_tail_hr < (avg_init_hr * 0.85)
 
+    '''
     @property
     def observations(self):
         return self._observations
+    '''
